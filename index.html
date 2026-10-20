@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400;1,600&family=Be+Vietnam+Pro:wght@300;400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap"
       rel="stylesheet"
     />
 
@@ -424,8 +424,10 @@
         ) {
           return theme.defaultWish;
         }
+        // Không set defaultWish trong wishes.js => bức thư chính hiện toàn bộ
+        // danh sách thư của tab.
         const list = getWishList(id);
-        return list.length ? list[0] : "20/10 vui vẻ nhé 🌸";
+        return list.length ? list.join("\n") : "20/10 vui vẻ nhé 🌸";
       }
       window.getDefaultWish = getDefaultWish;
 
@@ -543,6 +545,9 @@
           <div class="letter-deco"></div>
         </div>
         <div class="letter-body"></div>
+        <div class="letter-hint" id="letter-hint">
+          bấm vào thư để xem hết ngay ⏩
+        </div>
         <div class="letter-footer">
           <span class="letter-sign">— Gửi tặng bạn 🌼</span>
         </div>
@@ -559,12 +564,11 @@
         justify-content: center;
         pointer-events: all;
       }
+      /* Bỏ hẳn lớp nền mờ/blur phía sau thư — nền 3D hiện rõ. */
       #letter-blur-bg {
         position: absolute;
         inset: 0;
-        background: rgba(0, 0, 0, 0.55);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
+        background: transparent;
         opacity: 0;
         transition: opacity 0.8s ease;
       }
@@ -796,21 +800,17 @@
         position: absolute;
         z-index: 3;
         width: min(90vw, 440px);
-        background: linear-gradient(
-          160deg,
-          #fff,
-          rgba(var(--accent-soft-rgb), 0.18) 50%,
-          rgba(var(--accent-rgb), 0.12)
-        );
+        background: #fff;
         border-radius: 16px;
         padding: 36px 36px 28px;
-        box-shadow: 0 30px 80px rgba(var(--accent-rgb), 0.35),
-          0 8px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-        border: 1px solid rgba(var(--accent-soft-rgb), 0.5);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28),
+          0 8px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        border: 1px solid #e6e6e6;
         transform: scale(0.85) translateY(30px);
         opacity: 0;
         pointer-events: all;
-        font-family: "Lora", "Be Vietnam Pro", serif;
+        font-family: "JetBrains Mono", "Courier New", monospace;
+        color: #000;
         max-height: 85vh;
         overflow-y: auto;
         transition: opacity 0.6s ease,
@@ -828,9 +828,9 @@
         position: absolute;
         top: 14px;
         right: 16px;
-        background: rgba(var(--accent-rgb), 0.12);
-        border: 1px solid rgba(var(--accent-rgb), 0.3);
-        color: var(--accent);
+        background: #f3f3f3;
+        border: 1px solid #dcdcdc;
+        color: #000;
         width: 32px;
         height: 32px;
         border-radius: 50%;
@@ -843,7 +843,7 @@
           color 0.45s ease, transform 0.2s;
       }
       #close-letter:hover {
-        background: rgba(var(--accent-rgb), 0.25);
+        background: #e8e8e8;
         transform: rotate(90deg);
       }
       .letter-header {
@@ -851,30 +851,37 @@
       }
       .letter-date {
         font-size: 13px;
-        color: var(--accent);
+        color: #000;
         letter-spacing: 2px;
         text-transform: uppercase;
-        font-family: "Courier New", monospace;
+        font-family: "JetBrains Mono", "Courier New", monospace;
       }
       .letter-deco {
         margin-top: 10px;
         height: 1px;
-        background: linear-gradient(
-          90deg,
-          rgba(var(--accent-rgb), 0.6),
-          rgba(var(--accent-rgb), 0.1)
-        );
+        background: #e0e0e0;
       }
       .letter-body {
         min-height: 80px;
       }
+      .letter-hint {
+        font-size: 11px;
+        color: #666;
+        margin: -4px 0 12px;
+        font-family: "JetBrains Mono", "Courier New", monospace;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+      .letter-hint.show {
+        opacity: 1;
+      }
       .letter-body p {
         margin: 0 0 14px;
         line-height: 1.9;
-        font-style: italic;
-        color: #3a1a2e;
+        font-style: normal;
+        color: #000;
         word-break: break-word;
-        font-family: "Lora", "Be Vietnam Pro", serif;
+        font-family: "JetBrains Mono", "Courier New", monospace;
       }
       .letter-footer {
         margin-top: 20px;
@@ -882,8 +889,8 @@
       }
       .letter-sign {
         font-size: 15px;
-        color: var(--accent);
-        font-style: italic;
+        color: #000;
+        font-style: normal;
         opacity: 0;
         transition: opacity 0.8s ease;
       }
@@ -894,7 +901,7 @@
         display: inline-block;
         width: 2px;
         height: 1em;
-        background: var(--accent);
+        background: #000;
         margin-left: 2px;
         vertical-align: middle;
         animation: blink 0.8s step-end infinite;
@@ -947,30 +954,37 @@
         padding: 10px;
         border: none;
         border-radius: 10px;
-        font-family: "Lora", "Be Vietnam Pro", serif;
-        font-size: 14px;
+        font-family: "JetBrains Mono", "Courier New", monospace;
+        font-size: 13px;
+        color: #000;
         cursor: pointer;
         transition: background 0.45s ease, border-color 0.45s ease,
           color 0.45s ease, opacity 0.2s, transform 0.15s;
       }
       #btn-new-wish {
-        background: linear-gradient(135deg, var(--accent-soft), var(--accent));
-        color: #24152b;
+        background: #f3f3f3;
+        border: 1px solid #dcdcdc !important;
+        color: #000;
         transition: background 0.45s ease, opacity 0.2s, transform 0.15s;
       }
       #btn-copy-wish {
-        background: rgba(var(--accent-rgb), 0.12);
-        border: 1px solid rgba(var(--accent-rgb), 0.3) !important;
-        color: var(--accent);
+        background: #f3f3f3;
+        border: 1px solid #dcdcdc !important;
+        color: #000;
         transition: background 0.45s ease, border-color 0.45s ease,
           color 0.45s ease, opacity 0.2s, transform 0.15s;
       }
       #btn-send-wish {
-        background: rgba(var(--accent-soft-rgb), 0.18);
-        border: 1px solid rgba(var(--accent-soft-rgb), 0.55) !important;
-        color: #3a1a2e;
+        background: #f3f3f3;
+        border: 1px solid #dcdcdc !important;
+        color: #000;
         transition: background 0.45s ease, border-color 0.45s ease,
           color 0.45s ease, opacity 0.2s, transform 0.15s;
+      }
+      #wish-actions button:hover:not(:disabled) {
+        background: #e8e8e8;
+        transform: translateY(-1px);
+        opacity: 0.9;
       }
       #wish-actions button:disabled {
         cursor: default;
@@ -984,7 +998,7 @@
 
       #guestbook-box {
         margin-top: 22px;
-        border-top: 1px solid rgba(var(--accent-rgb), 0.2);
+        border-top: 1px solid #e0e0e0;
         padding-top: 18px;
         animation: fadeUp 0.6s ease forwards;
       }
@@ -1000,56 +1014,57 @@
       }
       .guestbook-label {
         font-size: 13px;
-        color: var(--accent);
+        color: #000;
         margin-bottom: 4px;
-        font-family: "Courier New", monospace;
+        font-family: "JetBrains Mono", "Courier New", monospace;
         letter-spacing: 1px;
       }
       .guestbook-note {
         font-size: 11px;
-        color: #c08aa0;
+        color: #555;
         margin-bottom: 10px;
       }
       #guestbook-input {
         width: 100%;
         box-sizing: border-box;
-        border: 1px solid rgba(var(--accent-rgb), 0.35);
+        border: 1px solid #dcdcdc;
         border-radius: 10px;
         padding: 12px 14px;
         font-size: 15px;
-        font-family: "Lora", "Be Vietnam Pro", serif;
-        font-style: italic;
-        color: #3a1a2e;
-        background: rgba(var(--accent-soft-rgb), 0.12);
+        font-family: "JetBrains Mono", "Courier New", monospace;
+        font-style: normal;
+        color: #000;
+        background: #fff;
         resize: none;
         outline: none;
         transition: border-color 0.2s, box-shadow 0.2s;
         line-height: 1.8;
       }
       #guestbook-input:focus {
-        border-color: var(--accent-soft);
-        box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
+        border-color: #999;
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
       }
       #guestbook-input::placeholder {
-        color: #c08aa0;
+        color: #777;
       }
       #guestbook-send {
         margin-top: 10px;
         width: 100%;
         padding: 11px;
-        background: linear-gradient(135deg, var(--accent-soft), var(--accent));
-        border: none;
+        background: #f3f3f3;
+        border: 1px solid #dcdcdc;
         border-radius: 10px;
-        color: #24152b;
+        color: #000;
         font-size: 15px;
-        font-family: "Lora", "Be Vietnam Pro", serif;
+        font-family: "JetBrains Mono", "Courier New", monospace;
         cursor: pointer;
         letter-spacing: 0.5px;
         transition: background 0.45s ease, box-shadow 0.45s ease, opacity 0.2s,
           transform 0.15s;
-        box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.4);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
       }
       #guestbook-send:hover {
+        background: #e8e8e8;
         opacity: 0.9;
         transform: translateY(-1px);
       }
@@ -1063,16 +1078,16 @@
       }
       .guestbook-entry {
         font-size: 13px;
-        font-style: italic;
-        color: #3a1a2e;
-        background: rgba(var(--accent-soft-rgb), 0.35);
+        font-style: normal;
+        color: #000;
+        background: #f5f5f5;
         border-radius: 8px;
         padding: 8px 10px;
         word-break: break-word;
       }
       .guestbook-empty {
         font-size: 13px;
-        color: #c08aa0;
+        color: #555;
         text-align: center;
       }
 
@@ -1272,6 +1287,10 @@
           const myToken = ++typeToken;
           container.innerHTML = "";
           const lines = text.split("\n");
+          // Thư dài thì gõ nhanh hơn để khỏi phải chờ.
+          const isLong = text.length > 120;
+          const charDelay = () => (isLong ? 10 + Math.random() * 10 : 65 + Math.random() * 35);
+          const lineDelay = isLong ? 40 : 120;
           const els = [];
           lines.forEach((line, i) => {
             if (line === "") {
@@ -1290,27 +1309,58 @@
           cursor.className = "cursor-blink";
           container.appendChild(cursor);
 
+          const hint = document.getElementById("letter-hint");
+          if (hint) hint.classList.add("show");
+
           let li = 0,
-            ci = 0;
+            ci = 0,
+            finished = false;
+
+          function finish() {
+            if (finished) return;
+            finished = true;
+            lines.forEach((line, i) => {
+              if (els[i]) els[i].textContent = line;
+            });
+            cursor.remove();
+            card.removeEventListener("click", skip);
+            if (hint) hint.classList.remove("show");
+            if (myToken === typeToken && onDone) onDone();
+          }
+
+          // Bấm vào thư là hiện hết luôn, khỏi phải đợi gõ.
+          function skip(e) {
+            if (myToken !== typeToken) return;
+            const t = e && e.target;
+            if (t && t.closest && t.closest("button, textarea, input, a")) return;
+            finish();
+          }
+          card.addEventListener("click", skip);
+
           function tick() {
-            if (myToken !== typeToken) return; // có yêu cầu rút lời chúc mới, huỷ bản đang gõ dở
+            if (myToken !== typeToken) {
+              // có yêu cầu rút lời chúc mới, huỷ bản đang gõ dở
+              card.removeEventListener("click", skip);
+              if (hint) hint.classList.remove("show");
+              return;
+            }
+            if (finished) return;
             while (li < lines.length && els[li] === null) {
               li++;
               ci = 0;
             }
             if (li >= lines.length) {
-              cursor.remove();
-              if (onDone) onDone();
+              finish();
               return;
             }
             const line = lines[li];
             if (ci < line.length) {
               els[li].textContent += line[ci++];
-              setTimeout(tick, 65 + Math.random() * 35);
+              setTimeout(tick, charDelay());
             } else {
               li++;
               ci = 0;
-              setTimeout(tick, 120);
+              setTimeout(tick, lineDelay);
             }
           }
           setTimeout(tick, 300);
@@ -1592,19 +1642,20 @@
         transition: transform 0.2s ease;
         z-index: 999999;
       }
-      #toggle-music.playing #icon-note,
-      #toggle-music.playing #icon-note-slash {
+      #toggle-music.playing svg {
         animation: spin 3s linear infinite;
       }
       #toggle-music svg {
         display: block;
       }
-      .playing #icon-note {
-        display: block !important;
+      #toggle-music #icon-note {
+        display: none;
       }
-
-      .playing #icon-note-slash {
-        display: none !important;
+      #toggle-music.playing #icon-note {
+        display: block;
+      }
+      #toggle-music.playing #icon-note-slash {
+        display: none;
       }
       @keyframes spin {
         from {
@@ -1614,10 +1665,32 @@
           transform: rotate(360deg);
         }
       }
+
+      #music-hint {
+        position: fixed;
+        bottom: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 999999;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        color: #fff;
+        font-family: "Be Vietnam Pro", sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+      #music-hint.show {
+        opacity: 1;
+      }
     </style>
 
-    <button id="toggle-music">
-      <svg id="icon-note" width="24" height="24" style="display: none">
+    <button id="toggle-music" aria-label="Bật/tắt nhạc nền">
+      <svg id="icon-note" width="24" height="24">
         <path fill="currentColor" d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z" />
       </svg>
       <svg id="icon-note-slash" width="24" height="24">
@@ -1636,33 +1709,69 @@
       </svg>
     </button>
 
+    <div id="music-hint">Chạm màn hình để bật nhạc 🎵</div>
+
     <audio id="bg-audio" src="audio.mp3" loop autoplay preload="auto"></audio>
 
     <script>
-      let isPlaying = false;
       const btn = document.getElementById("toggle-music");
       const audioEl = document.getElementById("bg-audio");
-      window.addEventListener("load", () => {
-        audioEl
-          .play()
-          .then(() => {
-            isPlaying = true;
-            btn.classList.add("playing");
-          })
-          .catch(() => {});
-      });
-      function playMedia() {
-        audioEl.play();
+      const musicHint = document.getElementById("music-hint");
+      let userPaused = false;
+      let unlocked = false;
+
+      function syncMusicUI() {
+        const playing = !audioEl.paused && !audioEl.ended;
+        btn.classList.toggle("playing", playing);
+        if (musicHint) musicHint.classList.toggle("show", !playing && !unlocked);
       }
+
+      function playMedia() {
+        const p = audioEl.play();
+        if (p && typeof p.catch === "function") {
+          p.catch(() => {
+            // Trình duyệt chặn autoplay có tiếng — báo người dùng chạm 1 cái.
+            if (musicHint) musicHint.classList.add("show");
+          });
+        }
+      }
+
       function pauseMedia() {
         audioEl.pause();
       }
 
+      audioEl.addEventListener("play", syncMusicUI);
+      audioEl.addEventListener("pause", syncMusicUI);
+      audioEl.addEventListener("ended", syncMusicUI);
+
+      // Mở trang là tự phát nhạc. Nếu trình duyệt chặn (cần tương tác
+      // người dùng) thì phát ngay ở lần chạm/phím đầu tiên.
+      function autoStart() {
+        if (userPaused) return;
+        playMedia();
+      }
+
+      function unlockMusic() {
+        if (unlocked) return;
+        unlocked = true;
+        autoStart();
+      }
+
+      window.addEventListener("load", autoStart);
+      ["pointerdown", "touchstart", "keydown"].forEach((evt) => {
+        window.addEventListener(evt, unlockMusic, { passive: true });
+      });
+
       btn.addEventListener("click", () => {
-        if (!isPlaying) playMedia();
-        else pauseMedia();
-        isPlaying = !isPlaying;
-        btn.classList.toggle("playing", isPlaying);
+        if (audioEl.paused) {
+          userPaused = false;
+          unlocked = true;
+          playMedia();
+        } else {
+          userPaused = true;
+          pauseMedia();
+        }
+        syncMusicUI();
       });
     </script>
 

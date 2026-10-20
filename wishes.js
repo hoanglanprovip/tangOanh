@@ -5,8 +5,10 @@
 //   WISH_TABS    — danh sách tab (đối tượng nhận thư). `id` PHẢI trùng với
 //                  key của WISHES / TEXTS_BY_TAB, và index.html tự lấy tab
 //                  đầu tiên làm mặc định nên không cần sửa file nào khác.
-//   defaultWish  — bức thư chính, hiện ra ngay khi mở trang.
-//   WISHES       — các bức thư khác, dùng cho nút "Rút thư khác".
+//   defaultWish  — (tuỳ chọn) nếu có, đây là bức thư chính hiện ra đầu tiên.
+//                  Nếu bỏ trống thì bức thư chính = toàn bộ WISHES của tab.
+//   WISHES       — nội dung thư. Tất cả các dòng trong 1 tab là nội dung bức
+//                  thư chính; từng dòng cũng là 1 bức thư riêng để rút/gửi.
 //   TEXTS_BY_TAB — chữ bay trong nền 3D, đổi theo tab đang chọn.
 
 const WISH_TABS = [
@@ -18,8 +20,8 @@ const WISH_TABS = [
     colorSoft: "#ff8fab",
     sealEmoji: "💌",
     petalEmojis: ["💗", "💌", "🌹"],
-    // Nội dung bức thư hiện ra đầu tiên — sửa dòng này để đổi thư chính.
-    defaultWish: "Chúc Oanh 20/10 vui vẻ nháaa",
+    // Bỏ trống => bức thư chính hiện toàn bộ WISHES.nguoiyeu bên dưới.
+    defaultWish: "",
   },
 ];
 
