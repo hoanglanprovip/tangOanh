@@ -289,7 +289,11 @@
     <div id="tab-warp" aria-hidden="true"></div>
 
     <script>
-      window.currentWishTab = "chung";
+      // Tab mặc định lấy từ wishes.js, không hard-code id ở đây.
+      // Thêm/bớt tab trong wishes.js là chạy được ngay, không phải sửa file này.
+      window.currentWishTab =
+        (window.WISH_TABS && window.WISH_TABS[0] && window.WISH_TABS[0].id) ||
+        "chung";
 
       function hexToRgb(hex) {
         const value = String(hex || "").replace("#", "");
@@ -305,13 +309,30 @@
         return (
           (window.WISH_TABS || []).find((tab) => tab.id === tabId) ||
           (window.WISH_TABS || [])[0] || {
+            id: "chung",
+            label: "Chung",
             color: "#ffb648",
             colorSoft: "#ff9ec7",
             sealEmoji: "🎁",
             petalEmojis: ["🌼", "🌸", "✨"],
+            defaultWish: "20/10 vui vẻ nhé 🌸",
           }
         );
       }
+
+      function getWishActionLabels() {
+        const theme = window.currentWishTheme || {};
+        const petalEmojis = Array.isArray(theme.petalEmojis) && theme.petalEmojis.length
+          ? theme.petalEmojis
+          : ["🌼", "🌸", "✨"];
+        const sealEmoji = theme.sealEmoji || "🎁";
+        return {
+          newWish: `Rút thư khác ${sealEmoji}`,
+          copyWish: `Copy lời chúc ${petalEmojis[1] || "📋"}`,
+          sendWish: `Gửi thư này ${sealEmoji}`,
+        };
+      }
+      window.getWishActionLabels = getWishActionLabels;
 
       function applyWishTheme(tabId) {
         const theme = getWishTheme(tabId);
@@ -334,14 +355,21 @@
         const seal = document.getElementById("env-seal");
         if (seal) seal.textContent = theme.sealEmoji;
 
+        const labels = getWishActionLabels();
+
         const newWishButton = document.getElementById("btn-new-wish");
         if (newWishButton) {
-          newWishButton.textContent = `Rút lời chúc khác ${theme.sealEmoji}`;
+          newWishButton.textContent = labels.newWish;
         }
 
         const copyWishButton = document.getElementById("btn-copy-wish");
         if (copyWishButton) {
-          copyWishButton.textContent = `Copy lời chúc ${petalEmojis[1] || "📋"} 📋`;
+          copyWishButton.textContent = labels.copyWish;
+        }
+
+        const sendWishButton = document.getElementById("btn-send-wish");
+        if (sendWishButton) {
+          sendWishButton.textContent = labels.sendWish;
         }
 
         const guestbookSend = document.getElementById("guestbook-send");
@@ -369,10 +397,45 @@
       }
       window.playTabWarp = playTabWarp;
 
-      function pickWish() {
-        const list = (window.WISHES && window.WISHES[window.currentWishTab]) || [];
-        if (!list.length) return "20/10 vui vẻ nhé 🌸";
-        return list[Math.floor(Math.random() * list.length)];
+      // Danh sách thư của 1 tab. Bức thư chính (defaultWish) luôn nằm trong
+      // pool nên "Rút thư khác" vẫn có thể rút lại được nó.
+      function getWishList(tabId) {
+        const id = tabId || window.currentWishTab;
+        const theme = getWishTheme(id);
+        const raw = (window.WISHES && window.WISHES[id]) || [];
+        const list = (Array.isArray(raw) ? raw : []).filter(
+          (text) => typeof text === "string" && text.trim()
+        );
+        const defaultWish =
+          theme && typeof theme.defaultWish === "string" && theme.defaultWish.trim()
+            ? theme.defaultWish
+            : "";
+        return defaultWish ? [defaultWish].concat(list) : list;
+      }
+      window.getWishList = getWishList;
+
+      function getDefaultWish(tabId) {
+        const id = tabId || window.currentWishTab;
+        const theme = getWishTheme(id);
+        if (
+          theme &&
+          typeof theme.defaultWish === "string" &&
+          theme.defaultWish.trim()
+        ) {
+          return theme.defaultWish;
+        }
+        const list = getWishList(id);
+        return list.length ? list[0] : "20/10 vui vẻ nhé 🌸";
+      }
+      window.getDefaultWish = getDefaultWish;
+
+      // excludeText: tránh rút lại đúng bức thư đang hiện.
+      function pickWish(excludeText) {
+        const list = getWishList();
+        if (!list.length) return getDefaultWish();
+        const pool = excludeText ? list.filter((text) => text !== excludeText) : list;
+        const candidates = pool.length ? pool : list;
+        return candidates[Math.floor(Math.random() * candidates.length)];
       }
       window.pickWish = pickWish;
     </script>
@@ -383,7 +446,8 @@
         const container = document.getElementById("wish-tabs");
         (window.WISH_TABS || []).forEach((tab, idx) => {
           const btn = document.createElement("button");
-          btn.className = "wish-tab" + (idx === 0 ? " active" : "");
+          const isActive = tab.id === window.currentWishTab;
+          btn.className = "wish-tab" + (isActive ? " active" : "");
           btn.textContent = `${tab.icon} ${tab.label}`;
           btn.addEventListener("click", () => {
             if (window.currentWishTab === tab.id) return;
@@ -398,8 +462,9 @@
             if (window.refreshFallingTexts) window.refreshFallingTexts();
 
             const card = document.getElementById("letter-card");
-            if (card && card.classList.contains("show") && window.showNewWish) {
-              window.showNewWish();
+            if (card && card.classList.contains("show") && window.showWish) {
+              // Đổi tab thì hiện bức thư chính của tab mới.
+              window.showWish(window.getDefaultWish(tab.id));
             }
           });
           container.appendChild(btn);
@@ -875,9 +940,10 @@
         display: flex;
         gap: 10px;
         margin-top: 18px;
+        flex-wrap: wrap;
       }
       #wish-actions button {
-        flex: 1;
+        flex: 1 1 130px;
         padding: 10px;
         border: none;
         border-radius: 10px;
@@ -899,7 +965,19 @@
         transition: background 0.45s ease, border-color 0.45s ease,
           color 0.45s ease, opacity 0.2s, transform 0.15s;
       }
-      #wish-actions button:hover {
+      #btn-send-wish {
+        background: rgba(var(--accent-soft-rgb), 0.18);
+        border: 1px solid rgba(var(--accent-soft-rgb), 0.55) !important;
+        color: #3a1a2e;
+        transition: background 0.45s ease, border-color 0.45s ease,
+          color 0.45s ease, opacity 0.2s, transform 0.15s;
+      }
+      #wish-actions button:disabled {
+        cursor: default;
+        opacity: 0.7;
+        transform: none;
+      }
+      #wish-actions button:hover:not(:disabled) {
         transform: translateY(-1px);
         opacity: 0.9;
       }
@@ -1118,6 +1196,7 @@
         }
 
         #wish-actions button {
+          flex: 1 1 calc(50% - 4px);
           padding: 10px 7px;
           font-size: 12px;
         }
@@ -1157,7 +1236,10 @@
         const closeBtn = document.getElementById("close-letter");
         const envScene = document.getElementById("envelope-scene");
         const inkSpread = document.getElementById("ink-spread");
+        // Có thể ghi đè bằng window.DISCORD_WEBHOOK_URL (đặt trước trong
+        // wishes.js) nếu muốn đổi kênh nhận thư mà không sửa file này.
         const DISCORD_WEBHOOK_URL =
+          window.DISCORD_WEBHOOK_URL ||
           "https://discord.com/api/webhooks/1548527249202880534/uH8vq22OpllFQdeI9PprG0c-2rci8FAaTNWPXk05Mefa2yMRJfCAoA2wq1wqL6ixu_Fk";
 
         if (window.applyWishTheme) {
@@ -1234,11 +1316,29 @@
           setTimeout(tick, 300);
         }
 
-        function showNewWish() {
+        // Nội dung bức thư đang hiện (đã bỏ cursor gõ dở).
+        function currentLetterText() {
+          return Array.from(bodyEl.querySelectorAll("p"))
+            .map((p) => p.textContent)
+            .join("\n")
+            .trim();
+        }
+        window.currentLetterText = currentLetterText;
+
+        // Hiện một bức thư bất kỳ (dùng khi đổi tab hoặc kéo từ kho).
+        function showWish(text) {
+          const content =
+            typeof text === "string" && text.trim() ? text : window.getDefaultWish();
           sign.classList.remove("show");
-          typeWriter(window.pickWish(), bodyEl, () => {
+          typeWriter(content, bodyEl, () => {
             sign.classList.add("show");
           });
+        }
+        window.showWish = showWish;
+
+        // Rút một bức thư khác (không rút lại đúng bức đang hiện).
+        function showNewWish() {
+          showWish(window.pickWish(currentLetterText()));
         }
         window.showNewWish = showNewWish;
 
@@ -1247,13 +1347,17 @@
           const footer = card.querySelector(".letter-footer");
           const row = document.createElement("div");
           row.id = "wish-actions";
-          const theme = window.currentWishTheme || {
-            sealEmoji: "🎁",
-            petalEmojis: ["🌼", "🌸"],
-          };
+          const labels = window.getWishActionLabels
+            ? window.getWishActionLabels()
+            : {
+                newWish: "Rút thư khác 🎁",
+                copyWish: "Copy lời chúc 📋",
+                sendWish: "Gửi thư này 💌",
+              };
           row.innerHTML = `
-      <button id="btn-new-wish" type="button">Rút lời chúc khác ${theme.sealEmoji}</button>
-      <button id="btn-copy-wish" type="button">Copy lời chúc ${theme.petalEmojis[1] || "📋"} 📋</button>
+      <button id="btn-new-wish" type="button">${labels.newWish}</button>
+      <button id="btn-copy-wish" type="button">${labels.copyWish}</button>
+      <button id="btn-send-wish" type="button">${labels.sendWish}</button>
     `;
           footer.insertAdjacentElement("beforebegin", row);
 
@@ -1264,21 +1368,44 @@
           document
             .getElementById("btn-copy-wish")
             .addEventListener("click", () => {
-              const text = Array.from(bodyEl.querySelectorAll("p"))
-                .map((p) => p.textContent)
-                .join("\n");
+              const text = currentLetterText();
               const btn = document.getElementById("btn-copy-wish");
+              const old = btn.textContent;
               navigator.clipboard
                 .writeText(text)
                 .then(() => {
-                  const old = btn.textContent;
                   btn.textContent = "Đã copy ✓";
                   setTimeout(() => (btn.textContent = old), 1500);
                 })
                 .catch(() => {
-                  const old = btn.textContent;
                   btn.textContent = "Không copy được 😢";
                   setTimeout(() => (btn.textContent = old), 1500);
+                });
+            });
+
+          // Gửi đúng bức thư đang hiện lên Discord — rút thư khác rồi gửi,
+          // mỗi bức thư gửi đi là một lời khác nhau.
+          document
+            .getElementById("btn-send-wish")
+            .addEventListener("click", () => {
+              const text = currentLetterText();
+              if (!text) return;
+              const btn = document.getElementById("btn-send-wish");
+              const old = btn.textContent;
+              btn.disabled = true;
+              btn.textContent = "Đang gửi…";
+              sendLetterToDiscord(text)
+                .then(() => {
+                  btn.textContent = "Đã gửi ✓";
+                })
+                .catch(() => {
+                  btn.textContent = "Gửi lỗi 😢";
+                })
+                .finally(() => {
+                  setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = old;
+                  }, 1600);
                 });
             });
         }
@@ -1299,12 +1426,18 @@
           } catch (e) {}
         }
 
-        function sendGuestbookToDiscord(text) {
-          const tabLabel =
+        function currentTabLabel() {
+          return (
             (window.currentWishTheme && window.currentWishTheme.label) ||
             window.currentWishTab ||
-            "Chung";
+            "Chung"
+          );
+        }
 
+        function postToDiscord(content, title) {
+          if (!DISCORD_WEBHOOK_URL) {
+            return Promise.reject(new Error("Thiếu cấu hình Discord webhook"));
+          }
           return fetch(DISCORD_WEBHOOK_URL, {
             method: "POST",
             headers: {
@@ -1312,12 +1445,21 @@
             },
             body: JSON.stringify({
               username: "Sổ lưu bút 20/10",
-              content: `**${tabLabel}**\n${text}`,
+              content: `**${title}**\n${content}`,
               allowed_mentions: { parse: [] },
             }),
           }).then((response) => {
             if (!response.ok) throw new Error(`Discord HTTP ${response.status}`);
           });
+        }
+
+        function sendGuestbookToDiscord(text) {
+          return postToDiscord(text, currentTabLabel());
+        }
+
+        // Gửi bức thư đang hiện — mỗi lần rút thư khác rồi gửi là 1 lời khác.
+        function sendLetterToDiscord(text) {
+          return postToDiscord(text, `Thư 20/10 — ${currentTabLabel()}`);
         }
 
         function renderGuestbook(listEl) {
@@ -1418,7 +1560,7 @@
                 envScene.style.pointerEvents = "none";
                 card.classList.remove("lc-hidden");
                 setTimeout(() => card.classList.add("show"), 30);
-                typeWriter(window.pickWish(), bodyEl, () => {
+                typeWriter(window.getDefaultWish(), bodyEl, () => {
                   sign.classList.add("show");
                   initWishActions();
                   setTimeout(showGuestbook, 800);
